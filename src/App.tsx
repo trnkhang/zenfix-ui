@@ -2,13 +2,7 @@ import { NavLink, Navigate, Route, Routes } from 'react-router-dom'
 import { IndexingPage } from './pages/IndexingPage'
 import { JobsPage } from './pages/JobsPage'
 
-interface NavItemProps {
-  to: string
-  label: string
-  icon: string
-}
-
-function NavItem({ to, label, icon }: NavItemProps) {
+function NavItem({ to, label, icon }: { to: string; label: string; icon: string }) {
   return (
     <NavLink
       to={to}

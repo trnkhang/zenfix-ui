@@ -1,12 +1,11 @@
-import { useState, type FormEvent } from 'react'
+import { useState } from 'react'
 import { RepoCard } from '../components/RepoCard'
 import { StatsBar } from '../components/StatsBar'
 import { useRepos } from '../hooks/useRepos'
-import type { Repo } from '../lib/api'
 
 interface AddRepoModalProps {
   onClose: () => void
-  onAdd: (name: string, branch: string, autoReindex: boolean) => Promise<Repo>
+  onAdd: (name: string, branch: string, autoReindex: boolean) => Promise<void>
 }
 
 function AddRepoModal({ onClose, onAdd }: AddRepoModalProps) {
@@ -16,7 +15,7 @@ function AddRepoModal({ onClose, onAdd }: AddRepoModalProps) {
   const [submitting, setSubmitting] = useState(false)
   const [err, setErr] = useState<string | null>(null)
 
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim()) return
     setSubmitting(true)

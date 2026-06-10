@@ -1,7 +1,7 @@
 import type { Repo, RepoStatus } from '../lib/api'
 import { IndexProgress } from './IndexProgress'
 
-export interface RepoCardProps {
+interface Props {
   repo: Repo
   onReindex: (id: string) => void
   onDelete: (id: string) => void
@@ -22,7 +22,7 @@ function formatDate(iso: string | null): string {
   }).format(new Date(iso))
 }
 
-export function RepoCard({ repo, onReindex, onDelete }: RepoCardProps) {
+export function RepoCard({ repo, onReindex, onDelete }: Props) {
   const cfg = STATUS_CONFIG[repo.status]
   const isActive = repo.status === 'indexing' || repo.status === 'pending'
 

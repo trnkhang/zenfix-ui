@@ -1,48 +1,39 @@
-# ── Dependencies ─────────────────────────────────────────────────────────────
+# Dependencies
 node_modules/
 
-# ── Build output ─────────────────────────────────────────────────────────────
+# Build output
 dist/
 build/
 
-# ── Vite ─────────────────────────────────────────────────────────────────────
+# Vite
 .vite/
 
-# ── Environment / secrets ────────────────────────────────────────────────────
+# Environment files
 .env
-.env.local
-.env.*.local
+.env.*
 !.env.example
 
-# ── TypeScript ───────────────────────────────────────────────────────────────
-*.tsbuildinfo
-
-# ── Testing ──────────────────────────────────────────────────────────────────
-coverage/
-
-# ── Caches ───────────────────────────────────────────────────────────────────
-.eslintcache
-.stylelintcache
-.prettiercache
-
-# ── IDE ──────────────────────────────────────────────────────────────────────
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# ── OS ───────────────────────────────────────────────────────────────────────
-.DS_Store
-Thumbs.db
-
-# ── Logs ─────────────────────────────────────────────────────────────────────
+# Logs
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-lerna-debug.log*
 
-# ── Runtime ──────────────────────────────────────────────────────────────────
+# Coverage and caches
+coverage/
+.eslintcache
+.stylelintcache
+
+# TypeScript
+*.tsbuildinfo
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Docker/runtime
 *.pid
 *.seed
