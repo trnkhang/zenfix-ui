@@ -1,9 +1,9 @@
-interface Props {
+export interface IndexProgressProps {
   chunksIndexed: number
   isActive: boolean
 }
 
-export function IndexProgress({ chunksIndexed, isActive }: Props) {
+export function IndexProgress({ chunksIndexed, isActive }: IndexProgressProps) {
   if (!isActive && chunksIndexed === 0) return null
 
   return (

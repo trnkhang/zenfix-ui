@@ -1,6 +1,6 @@
 import type { Job, JobStatus, JobStep } from '../lib/api'
 
-interface Props {
+export interface JobCardProps {
   job: Job
 }
 
@@ -39,7 +39,7 @@ function durationStr(job: Job): string {
   return secs >= 60 ? `${Math.floor(secs / 60)}m ${secs % 60}s` : `${secs}s`
 }
 
-export function JobCard({ job }: Props) {
+export function JobCard({ job }: JobCardProps) {
   const duration = durationStr(job)
 
   return (

@@ -1,6 +1,6 @@
 import type { RepoStats } from '../lib/api'
 
-interface Props {
+export interface StatsBarProps {
   stats: RepoStats
 }
 
@@ -19,7 +19,7 @@ function StatItem({ label, value, color = 'text-slate-800' }: StatItemProps) {
   )
 }
 
-export function StatsBar({ stats }: Props) {
+export function StatsBar({ stats }: StatsBarProps) {
   return (
     <div className="bg-white border border-slate-200 rounded-xl px-6 py-4 flex items-center gap-8 shadow-sm">
       <StatItem label="Total Repos" value={stats.totalRepos} />

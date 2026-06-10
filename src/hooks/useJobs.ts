@@ -27,6 +27,7 @@ export function useJobs() {
           return next
         })
       } catch {
+        return
       }
     })
 
