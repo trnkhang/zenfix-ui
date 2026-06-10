@@ -12,8 +12,6 @@ export function useJobs() {
     queryFn: api.jobs.list,
   })
 
-  // SSE stream — patches the React Query cache in-place on each event so
-  // the UI updates immediately without a full refetch.
   useEffect(() => {
     const es = api.jobStream()
 
@@ -29,7 +27,6 @@ export function useJobs() {
           return next
         })
       } catch {
-        // ignore malformed events
       }
     })
 

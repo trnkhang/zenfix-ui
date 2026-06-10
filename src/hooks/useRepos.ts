@@ -10,7 +10,6 @@ export function useRepos() {
   const reposQuery = useQuery({
     queryKey: REPOS_KEY,
     queryFn: api.repos.list,
-    // Keep polling while any repo is actively being indexed
     refetchInterval: (query) => {
       const repos = query.state.data ?? []
       return repos.some((r) => r.status === 'indexing' || r.status === 'pending') ? 5_000 : false

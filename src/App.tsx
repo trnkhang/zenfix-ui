@@ -23,9 +23,7 @@ function NavItem({ to, label, icon }: { to: string; label: string; icon: string 
 export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 flex">
-      {/* Sidebar */}
       <aside className="w-56 shrink-0 bg-white border-r border-slate-200 flex flex-col">
-        {/* Logo */}
         <div className="px-5 py-5 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
             <span className="text-2xl">🤖</span>
@@ -36,19 +34,16 @@ export default function App() {
           </div>
         </div>
 
-        {/* Nav */}
         <nav className="flex-1 p-3 space-y-1">
           <NavItem to="/indexing" label="Repositories" icon="📦" />
           <NavItem to="/jobs" label="Jobs" icon="⚡" />
         </nav>
 
-        {/* Footer */}
         <div className="p-4 border-t border-slate-100">
           <p className="text-xs text-slate-400 text-center">GreenNode Claw-a-thon 2025</p>
         </div>
       </aside>
 
-      {/* Main content */}
       <main className="flex-1 overflow-auto">
         <div className="max-w-6xl mx-auto p-8">
           <Routes>

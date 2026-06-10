@@ -1,9 +1,5 @@
 @import 'tailwindcss';
 
-/*
-  Custom theme tokens — Tailwind v4 CSS-based config.
-  Defining --animate-indeterminate generates the animate-indeterminate utility class.
-*/
 @theme {
   --animate-indeterminate: indeterminate 1.8s ease-in-out infinite;
 }

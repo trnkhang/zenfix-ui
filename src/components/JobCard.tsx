@@ -44,7 +44,6 @@ export function JobCard({ job }: Props) {
 
   return (
     <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-      {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
@@ -64,7 +63,6 @@ export function JobCard({ job }: Props) {
         </div>
       </div>
 
-      {/* Steps timeline */}
       {job.steps.length > 0 && (
         <div className="mt-4 space-y-1.5">
           {job.steps.map((step, i) => (
@@ -85,7 +83,6 @@ export function JobCard({ job }: Props) {
         </div>
       )}
 
-      {/* Result block */}
       {job.result && job.status === 'done' && (
         <div className="mt-4 p-3 bg-emerald-50 border border-emerald-100 rounded-lg space-y-1">
           {job.result.summary && (
@@ -119,7 +116,6 @@ export function JobCard({ job }: Props) {
         </div>
       )}
 
-      {/* Footer */}
       <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100 text-xs text-slate-400">
         <span>{formatTime(job.createdAt)}</span>
         {duration && <span>⏱ {duration}</span>}

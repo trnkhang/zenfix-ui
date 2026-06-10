@@ -33,7 +33,6 @@ export function JobsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Jobs</h1>
@@ -55,7 +54,6 @@ export function JobsPage() {
         </button>
       </div>
 
-      {/* Filters + search */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="flex gap-1 bg-slate-100 p-1 rounded-xl">
           {FILTERS.map(f => (
@@ -87,7 +85,6 @@ export function JobsPage() {
         />
       </div>
 
-      {/* States */}
       {loading && (
         <div className="flex items-center justify-center py-20 text-slate-400">
           <span className="animate-spin text-2xl mr-3">⟳</span> Loading…
@@ -116,7 +113,6 @@ export function JobsPage() {
         </div>
       )}
 
-      {/* Job list */}
       {!loading && filtered.length > 0 && (
         <div className="space-y-4">
           {filtered.map(job => (

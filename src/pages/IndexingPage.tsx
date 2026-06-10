@@ -116,7 +116,6 @@ export function IndexingPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Repositories</h1>
@@ -141,10 +140,8 @@ export function IndexingPage() {
         </div>
       </div>
 
-      {/* Stats */}
       {stats && <StatsBar stats={stats} />}
 
-      {/* Search */}
       {repos.length > 4 && (
         <input
           type="search"
@@ -155,7 +152,6 @@ export function IndexingPage() {
         />
       )}
 
-      {/* States */}
       {loading && (
         <div className="flex items-center justify-center py-20 text-slate-400">
           <span className="animate-spin text-2xl mr-3">⟳</span> Loading…
@@ -188,7 +184,6 @@ export function IndexingPage() {
         </div>
       )}
 
-      {/* Repo grid */}
       {!loading && filtered.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map(repo => (

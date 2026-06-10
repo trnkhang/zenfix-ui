@@ -1,12 +1,10 @@
 const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
-// ── Types ────────────────────────────────────────────────────────────────────
-
 export type RepoStatus = 'indexed' | 'indexing' | 'pending' | 'error' | 'unknown'
 
 export interface Repo {
   id: string
-  name: string          // owner/repo
+  name: string
   branch: string
   status: RepoStatus
   chunksIndexed: number
@@ -57,8 +55,6 @@ export interface AddRepoPayload {
   autoReindex: boolean
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     headers: { 'Content-Type': 'application/json', ...init?.headers },
@@ -70,8 +66,6 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
   return res.json() as Promise<T>
 }
-
-// ── Repos ────────────────────────────────────────────────────────────────────
 
 export const api = {
   repos: {
@@ -91,6 +85,5 @@ export const api = {
 
   stats: () => request<RepoStats>('/api/stats'),
 
-  /** Returns a native EventSource connected to the SSE job stream. */
   jobStream: (): EventSource => new EventSource(`${BASE}/api/jobs/stream`),
 }

@@ -28,7 +28,6 @@ export function RepoCard({ repo, onReindex, onDelete }: Props) {
 
   return (
     <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
-      {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
@@ -45,24 +44,20 @@ export function RepoCard({ repo, onReindex, onDelete }: Props) {
           </div>
         </div>
 
-        {/* Status badge */}
         <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ring-1 shrink-0 ${cfg.badge}`}>
           <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
           {cfg.label}
         </span>
       </div>
 
-      {/* Error message */}
       {repo.status === 'error' && repo.error && (
         <p className="mt-2 text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
           {repo.error}
         </p>
       )}
 
-      {/* Progress */}
       <IndexProgress chunksIndexed={repo.chunksIndexed} isActive={isActive} />
 
-      {/* Footer */}
       <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100">
         <span className="text-xs text-slate-400">
           Last indexed: {formatDate(repo.lastIndexed)}
