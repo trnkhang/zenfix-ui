@@ -74,8 +74,7 @@ export const api = {
       request<Repo>('/api/repos', { method: 'POST', body: JSON.stringify(payload) }),
     reindex: (id: string) =>
       request<{ status: string }>(`/api/repos/${id}/reindex`, { method: 'POST' }),
-    delete: (id: string) =>
-      request<void>(`/api/repos/${id}`, { method: 'DELETE' }),
+    delete: (id: string) => request<void>(`/api/repos/${id}`, { method: 'DELETE' }),
   },
 
   jobs: {

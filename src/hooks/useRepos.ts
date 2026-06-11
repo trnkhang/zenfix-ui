@@ -33,8 +33,9 @@ export function useRepos() {
   const reindexMutation = useMutation({
     mutationFn: (id: string) => api.repos.reindex(id),
     onMutate: (id) => {
-      queryClient.setQueryData<Repo[]>(REPOS_KEY, (prev) =>
-        prev?.map((r) => (r.id === id ? { ...r, status: 'pending' as const } : r)) ?? [],
+      queryClient.setQueryData<Repo[]>(
+        REPOS_KEY,
+        (prev) => prev?.map((r) => (r.id === id ? { ...r, status: 'pending' as const } : r)) ?? [],
       )
     },
     onSettled: () => {

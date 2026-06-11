@@ -27,6 +27,7 @@ export function useJobs() {
           return next
         })
       } catch {
+        // Ignore malformed stream events and wait for the next update.
       }
     })
 
