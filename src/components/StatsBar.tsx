@@ -1,42 +1,25 @@
-import type { RepoStats } from '../lib/api'
+import type { RepoStats } from '../types'
 
 interface Props {
   stats: RepoStats
 }
 
-interface StatItemProps {
-  label: string
-  value: number | string
-  color?: string
-}
-
-function StatItem({ label, value, color = 'text-slate-800' }: StatItemProps) {
+function StatItem({ label, value }: { label: string; value: number | string }) {
   return (
-    <div className="flex flex-col gap-0.5">
-      <span className={`text-2xl font-bold ${color}`}>{value}</span>
-      <span className="text-xs tracking-wide text-slate-500 uppercase">{label}</span>
+    <div className="flex flex-1 flex-col gap-0.5 rounded-xl border border-zinc-200 bg-white px-5 py-4">
+      <span className="text-xl font-bold text-zinc-800">{value}</span>
+      <span className="text-xs text-zinc-400 uppercase tracking-wide">{label}</span>
     </div>
   )
 }
 
 export function StatsBar({ stats }: Props) {
   return (
-    <div className="flex items-center gap-8 rounded-xl border border-slate-200 bg-white px-6 py-4 shadow-sm">
-      <StatItem label="Total Repos" value={stats.totalRepos} />
-      <div className="h-10 w-px bg-slate-100" />
-      <StatItem label="Indexed" value={stats.indexedRepos} color="text-emerald-600" />
-      <div className="h-10 w-px bg-slate-100" />
-      <StatItem
-        label="Total Chunks"
-        value={stats.totalChunks.toLocaleString()}
-        color="text-blue-600"
-      />
-      <div className="h-10 w-px bg-slate-100" />
-      <StatItem
-        label="Active Jobs"
-        value={stats.activeJobs}
-        color={stats.activeJobs > 0 ? 'text-amber-600' : 'text-slate-800'}
-      />
+    <div className="flex gap-3">
+      <StatItem label="Total Repos"   value={stats.totalRepos} />
+      <StatItem label="Indexed"       value={stats.indexedRepos} />
+      <StatItem label="Total Chunks"  value={stats.totalChunks.toLocaleString()} />
+      <StatItem label="Active Jobs"   value={stats.activeJobs} />
     </div>
   )
 }

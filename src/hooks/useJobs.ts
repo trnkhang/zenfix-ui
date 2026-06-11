@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
-import { api, type Job } from '../lib/api'
+import { jobsService } from '../services'
+import type { Job } from '../types'
 
 export const JOBS_KEY = ['jobs'] as const
 
@@ -9,11 +10,11 @@ export function useJobs() {
 
   const query = useQuery({
     queryKey: JOBS_KEY,
-    queryFn: api.jobs.list,
+    queryFn: jobsService.list,
   })
 
   useEffect(() => {
-    const es = api.jobStream()
+    const es = jobsService.stream()
 
     es.addEventListener('job_update', (e: MessageEvent<string>) => {
       try {

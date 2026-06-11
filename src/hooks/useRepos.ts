@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { api, type AddRepoPayload, type Repo } from '../lib/api'
+import { reposService } from '../services'
+import type { AddRepoPayload, Repo } from '../types'
 
 export const REPOS_KEY = ['repos'] as const
 export const STATS_KEY = ['stats'] as const
@@ -9,21 +10,16 @@ export function useRepos() {
 
   const reposQuery = useQuery({
     queryKey: REPOS_KEY,
-    queryFn: api.repos.list,
-    refetchInterval: (query) => {
-      const repos = query.state.data ?? []
-      return repos.some((r) => r.status === 'indexing' || r.status === 'pending') ? 5_000 : false
-    },
+    queryFn: reposService.list,
   })
 
   const statsQuery = useQuery({
     queryKey: STATS_KEY,
-    queryFn: api.stats,
-    refetchInterval: 15_000,
+    queryFn: reposService.stats,
   })
 
   const addMutation = useMutation({
-    mutationFn: (payload: AddRepoPayload) => api.repos.add(payload),
+    mutationFn: (payload: AddRepoPayload) => reposService.add(payload),
     onSuccess: (newRepo) => {
       queryClient.setQueryData<Repo[]>(REPOS_KEY, (prev) => [newRepo, ...(prev ?? [])])
       void queryClient.invalidateQueries({ queryKey: STATS_KEY })
@@ -31,20 +27,20 @@ export function useRepos() {
   })
 
   const reindexMutation = useMutation({
-    mutationFn: (id: string) => api.repos.reindex(id),
+    mutationFn: (id: string) => reposService.reindex(id),
     onMutate: (id) => {
       queryClient.setQueryData<Repo[]>(
         REPOS_KEY,
         (prev) => prev?.map((r) => (r.id === id ? { ...r, status: 'pending' as const } : r)) ?? [],
       )
     },
-    onSettled: () => {
+    onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: REPOS_KEY })
     },
   })
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.repos.delete(id),
+    mutationFn: (id: string) => reposService.delete(id),
     onSuccess: (_, id) => {
       queryClient.setQueryData<Repo[]>(REPOS_KEY, (prev) => prev?.filter((r) => r.id !== id) ?? [])
       void queryClient.invalidateQueries({ queryKey: STATS_KEY })
@@ -58,8 +54,8 @@ export function useRepos() {
     error: reposQuery.error?.message ?? statsQuery.error?.message ?? null,
     isAdding: addMutation.isPending,
     addRepo: (payload: AddRepoPayload) => addMutation.mutateAsync(payload),
-    reindex: (id: string) => reindexMutation.mutate(id),
-    removeRepo: (id: string) => deleteMutation.mutate(id),
+    reindex: (id: string) => reindexMutation.mutateAsync(id),
+    removeRepo: (id: string) => deleteMutation.mutateAsync(id),
     refresh: () => queryClient.invalidateQueries({ queryKey: REPOS_KEY }),
   }
 }
