@@ -3,6 +3,7 @@ import { BASE, request } from './http'
 
 export const reposService = {
   list: () => request<Repo[]>('/api/repos'),
+  get: (id: string) => request<Repo>(`/api/repos/${id}`),
   add: (payload: AddRepoPayload) =>
     request<Repo>('/api/repos', { method: 'POST', body: JSON.stringify(payload) }),
   reindex: (id: string) =>

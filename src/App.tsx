@@ -1,42 +1,61 @@
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { RiSearchLine } from 'react-icons/ri'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { Sidebar } from './components/Sidebar'
+import { RepoDetailPage } from './pages/RepoDetailPage'
 import { ROUTES } from './routes/config'
 
-export default function App() {
-  const { pathname } = useLocation()
-  const active = ROUTES.find((r) => r.path === pathname)
-
+function TopBar() {
   return (
-    <div className="flex min-h-screen bg-zinc-50">
+    <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center border-b border-outline-variant bg-surface/80 px-10 backdrop-blur-md">
+      <div className="relative w-72">
+        <RiSearchLine className="absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm" />
+        <input
+          type="text"
+          placeholder="Search..."
+          className="w-full rounded-full border-none bg-surface-container py-2 pl-9 pr-4 text-sm text-on-surface outline-none transition-all focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20"
+        />
+      </div>
+    </header>
+  )
+}
+
+export default function App() {
+  return (
+    <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar />
 
-      <main className="flex-1 overflow-auto">
-        {active && (
-          <div className="border-b border-zinc-200 bg-white px-8 py-4">
-            <div className="mx-auto max-w-6xl">
-              <h2 className="text-sm font-semibold text-zinc-800">{active.label}</h2>
-              <p className="text-xs text-zinc-400">{active.description}</p>
-            </div>
-          </div>
-        )}
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <TopBar />
 
-        <Routes>
-          <Route path="/" element={<Navigate to="/indexing" replace />} />
-          {ROUTES.map((route) => (
+        <main className="flex-1 overflow-y-auto">
+          <Routes>
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            {ROUTES.map((route) => (
+              <Route
+                key={route.path}
+                path={route.path}
+                element={
+                  route.fullWidth ? (
+                    route.element
+                  ) : (
+                    <div className="mx-auto max-w-[1280px] px-10 py-10">
+                      {route.element}
+                    </div>
+                  )
+                }
+              />
+            ))}
             <Route
-              key={route.path}
-              path={route.path}
+              path="/repos/:repoId"
               element={
-                route.fullWidth ? (
-                  route.element
-                ) : (
-                  <div className="mx-auto max-w-6xl p-8">{route.element}</div>
-                )
+                <div className="mx-auto max-w-[1280px] px-10 py-10">
+                  <RepoDetailPage />
+                </div>
               }
             />
-          ))}
-        </Routes>
-      </main>
+          </Routes>
+        </main>
+      </div>
     </div>
   )
 }

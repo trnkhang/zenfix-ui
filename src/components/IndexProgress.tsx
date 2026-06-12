@@ -13,38 +13,36 @@ export function IndexProgress({ chunksIndexed, filesTotal, filesDone, isActive }
 
   return (
     <div className="mt-3 space-y-1.5">
-      <div className="flex justify-between text-xs text-zinc-400">
+      <div className="flex justify-between text-xs text-on-surface-variant">
         {isActive ? (
           hasTotals ? (
-            <span>
-              {filesDone.toLocaleString()} / {filesTotal.toLocaleString()} files
-            </span>
+            <span>{filesDone.toLocaleString()} / {filesTotal.toLocaleString()} files</span>
           ) : (
             <span>Indexing…</span>
           )
         ) : (
           <span>Indexed</span>
         )}
-        <span>{chunksIndexed.toLocaleString()} chunks</span>
+        <span className="font-mono">{chunksIndexed.toLocaleString()} chunks</span>
       </div>
 
-      <div className="relative h-1.5 overflow-hidden rounded-full bg-zinc-100">
+      <div className="relative h-1.5 overflow-hidden rounded-full bg-surface-container">
         {isActive ? (
           hasTotals ? (
             <div
-              className="h-full rounded-full bg-blue-400 transition-all duration-300"
+              className="h-full rounded-full bg-primary transition-all duration-300"
               style={{ width: `${pct}%` }}
             />
           ) : (
-            <div className="animate-indeterminate absolute h-full rounded-full bg-blue-400" />
+            <div className="animate-indeterminate absolute h-full rounded-full bg-primary" />
           )
         ) : (
-          <div className="h-full w-full rounded-full bg-emerald-400" />
+          <div className="h-full w-full rounded-full bg-green-500" />
         )}
       </div>
 
       {isActive && hasTotals && (
-        <p className="text-right text-xs text-zinc-400">{pct}%</p>
+        <p className="text-right text-xs text-on-surface-variant">{pct}%</p>
       )}
     </div>
   )

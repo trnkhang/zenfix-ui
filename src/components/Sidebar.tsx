@@ -1,21 +1,45 @@
 import type { ReactNode } from 'react'
-import { RiRobot2Line } from 'react-icons/ri'
-import { NavLink } from 'react-router-dom'
-import { ROUTES } from '../routes/config'
+import {
+  RiBugLine,
+  RiChat1Line,
+  RiDashboard2Line,
+  RiGitRepositoryLine,
+} from 'react-icons/ri'
 
-function NavItem({ to, label, icon }: { to: string; label: string; icon: ReactNode }) {
+import { NavLink, useLocation } from 'react-router-dom'
+import { ZenfixMark } from './ZenfixLogo'
+
+interface NavItem {
+  to: string
+  label: string
+  icon: ReactNode
+  matchPaths?: string[]
+}
+
+const MAIN_NAV: NavItem[] = [
+  { to: '/dashboard', label: 'Dashboard',      icon: <RiDashboard2Line /> },
+  { to: '/indexing',  label: 'Repositories',   icon: <RiGitRepositoryLine />, matchPaths: ['/repos'] },
+  { to: '/jobs',      label: 'Investigations', icon: <RiBugLine /> },
+  { to: '/chat',      label: 'Chat',           icon: <RiChat1Line /> },
+]
+
+function NavItemLink({ to, label, icon, matchPaths }: NavItem) {
+  const { pathname } = useLocation()
+  const extraActive = matchPaths?.some((p) => pathname.startsWith(p)) ?? false
+
   return (
     <NavLink
       to={to}
-      className={({ isActive }) =>
-        `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-          isActive
-            ? 'bg-white/10 text-white'
-            : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200'
+      className={({ isActive }) => {
+        const active = isActive || extraActive
+        return `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150 ${
+          active
+            ? 'bg-primary/8 text-primary font-semibold'
+            : 'text-on-surface-variant hover:bg-surface-container'
         }`
-      }
+      }}
     >
-      <span className="text-base">{icon}</span>
+      <span className="text-[18px] shrink-0">{icon}</span>
       {label}
     </NavLink>
   )
@@ -23,31 +47,25 @@ function NavItem({ to, label, icon }: { to: string; label: string; icon: ReactNo
 
 export function Sidebar() {
   return (
-    <aside className="flex w-56 shrink-0 flex-col bg-zinc-900">
-      <div className="px-5 py-5">
-        <div className="flex items-center gap-2.5">
-          <RiRobot2Line className="text-xl text-white" />
-          <div>
-            <h1 className="text-sm font-semibold leading-tight text-white">Zenfix</h1>
-            <p className="text-[10px] leading-tight text-zinc-500">Bug → MR, Automatically</p>
-          </div>
+    <aside className="flex h-screen w-64 shrink-0 flex-col border-r border-outline-variant bg-surface">
+      {/* Logo */}
+      <div className="flex h-14 shrink-0 items-center gap-3 border-b border-outline-variant/50 px-6">
+        <ZenfixMark size={32} className="shrink-0" />
+        <div>
+          <h1 className="text-sm font-bold leading-tight text-primary" style={{ fontFamily: 'Geist, Inter, sans-serif' }}>
+            Zenfix Engineering
+          </h1>
+          <p className="text-[11px] leading-tight text-on-surface-variant">Bug Report to Pull Request</p>
         </div>
       </div>
 
-      <div className="mx-4 h-px bg-zinc-800" />
-
-      <nav className="flex-1 space-y-0.5 p-3 pt-4">
-        <p className="mb-2 px-3 text-[10px] font-semibold tracking-widest text-zinc-600 uppercase">
-          Navigation
-        </p>
-        {ROUTES.map((route) => (
-          <NavItem key={route.path} to={route.path} label={route.label} icon={route.icon} />
+      {/* Main nav */}
+      <nav className="flex-1 overflow-y-auto px-3 py-4 flex flex-col gap-0.5">
+        {MAIN_NAV.map((item) => (
+          <NavItemLink key={item.to} {...item} />
         ))}
       </nav>
 
-      <div className="p-4">
-        <p className="text-center text-[11px] text-zinc-600">GreenNode Claw-a-thon 2025</p>
-      </div>
     </aside>
   )
 }

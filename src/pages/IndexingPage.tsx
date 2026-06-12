@@ -1,9 +1,8 @@
-import { useState } from 'react'
-import { RiAddLine, RiAlertLine, RiInboxLine, RiRefreshLine } from 'react-icons/ri'
+import { useState, useRef } from 'react'
+import { RiAddLine, RiAlertLine, RiCloseLine, RiGitRepositoryLine, RiInboxLine, RiRefreshLine } from 'react-icons/ri'
 import { RepoCard } from '../components/RepoCard'
-import { useToast } from '../components/Toast'
 import { RepoCardSkeleton } from '../components/Skeleton'
-import { StatsBar } from '../components/StatsBar'
+import { toast } from 'sonner'
 import { useRepos } from '../hooks/useRepos'
 
 function parseGithubUrl(input: string): { author: string; project: string } | null {
@@ -24,12 +23,11 @@ interface AddRepoModalProps {
 }
 
 function AddRepoModal({ onClose, onAdd }: AddRepoModalProps) {
-  const [url, setUrl] = useState('')
-  const [branch, setBranch] = useState('master')
-  const [autoReindex, setAutoReindex] = useState(true)
+  const [url, setUrl]               = useState('')
+  const [branch, setBranch]         = useState('master')
+  const [autoReindex, setAutoReindex] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const [err, setErr] = useState<string | null>(null)
-
+  const [err, setErr]               = useState<string | null>(null)
   const parsed = parseGithubUrl(url)
 
   async function handleSubmit(e: React.FormEvent) {
@@ -48,29 +46,34 @@ function AddRepoModal({ onClose, onAdd }: AddRepoModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white shadow-xl">
-        <div className="flex items-center justify-between border-b border-zinc-100 px-6 py-4">
-          <h2 className="font-semibold text-zinc-800">Add Repository</h2>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-inverse-surface/40 p-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div className="w-full max-w-md rounded-2xl border border-outline-variant bg-surface-container-lowest shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-outline-variant px-6 py-4">
+          <h2 className="font-semibold text-on-surface" style={{ fontFamily: 'Geist, Inter, sans-serif' }}>
+            Connect GitHub Repository
+          </h2>
           <button
             onClick={onClose}
-            className="flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-container"
           >
-            ×
+            <RiCloseLine />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 p-6">
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-zinc-700">
-              GitHub URL <span className="text-red-500">*</span>
+            <label className="mb-1.5 block text-sm font-medium text-on-surface">
+              GitHub URL <span className="text-error">*</span>
             </label>
             <input
               type="text"
               placeholder="https://github.com/owner/repo"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm outline-none focus:border-zinc-400 focus:bg-white"
+              className="w-full rounded-lg border border-outline-variant bg-surface-container px-3 py-2 text-sm text-on-surface outline-none transition focus:border-primary focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20"
               required
               autoFocus
             />
@@ -78,28 +81,28 @@ function AddRepoModal({ onClose, onAdd }: AddRepoModalProps) {
               <div className="mt-2 flex items-center gap-1.5">
                 {parsed ? (
                   <>
-                    <span className="text-xs text-emerald-600">✓</span>
-                    <span className="text-xs text-zinc-500">
-                      <span className="font-medium text-zinc-700">{parsed.author}</span>
-                      <span className="text-zinc-300"> / </span>
-                      <span className="font-medium text-zinc-700">{parsed.project}</span>
+                    <span className="text-xs text-green-600">✓</span>
+                    <span className="text-xs text-on-surface-variant">
+                      <span className="font-medium text-on-surface">{parsed.author}</span>
+                      <span className="text-outline"> / </span>
+                      <span className="font-medium text-on-surface">{parsed.project}</span>
                     </span>
                   </>
                 ) : (
-                  <span className="text-xs text-red-500">Invalid GitHub URL</span>
+                  <span className="text-xs text-error">Invalid GitHub URL</span>
                 )}
               </div>
             )}
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-zinc-700">Branch</label>
+            <label className="mb-1.5 block text-sm font-medium text-on-surface">Branch</label>
             <input
               type="text"
               placeholder="main"
               value={branch}
               onChange={(e) => setBranch(e.target.value)}
-              className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm outline-none focus:border-zinc-400 focus:bg-white"
+              className="w-full rounded-lg border border-outline-variant bg-surface-container px-3 py-2 text-sm text-on-surface outline-none transition focus:border-primary focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20"
             />
           </div>
 
@@ -108,16 +111,16 @@ function AddRepoModal({ onClose, onAdd }: AddRepoModalProps) {
               type="checkbox"
               checked={autoReindex}
               onChange={(e) => setAutoReindex(e.target.checked)}
-              className="h-4 w-4 rounded accent-zinc-800"
+              className="h-4 w-4 rounded accent-primary"
             />
             <div>
-              <span className="text-sm font-medium text-zinc-700">Auto re-index on push</span>
-              <p className="text-xs text-zinc-400">Re-index changed files when code is pushed</p>
+              <span className="text-sm font-medium text-on-surface">Auto re-index on push</span>
+              <p className="text-xs text-on-surface-variant">Re-index changed files when code is pushed</p>
             </div>
           </label>
 
           {err && (
-            <p className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-600">
+            <p className="rounded-lg border border-error-container bg-error-container px-3 py-2 text-sm text-on-error-container">
               {err}
             </p>
           )}
@@ -126,14 +129,14 @@ function AddRepoModal({ onClose, onAdd }: AddRepoModalProps) {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100"
+              className="flex-1 rounded-lg border border-outline-variant bg-surface-container px-4 py-2 text-sm font-medium text-on-surface-variant transition-colors hover:bg-surface-container-high"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={submitting || !parsed}
-              className="flex-1 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex-1 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-on-primary transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 hover:opacity-90"
             >
               {submitting ? 'Adding…' : 'Add & Index'}
             </button>
@@ -145,10 +148,25 @@ function AddRepoModal({ onClose, onAdd }: AddRepoModalProps) {
 }
 
 export function IndexingPage() {
-  const { repos, stats, loading, error, addRepo, reindex, removeRepo, refresh } = useRepos()
-  const toast = useToast()
-  const [showModal, setShowModal] = useState(false)
+  const { repos, loading, error, addRepo, reindex, removeRepo, refresh } = useRepos()
+  const [showModal, setShowModal]   = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+
+  const filtered = repos.filter((r) => r.name.toLowerCase().includes(searchQuery.toLowerCase()))
+
+  const refreshing = useRef(false)
+  async function handleRefresh() {
+    if (refreshing.current) return
+    refreshing.current = true
+    try {
+      await refresh()
+      toast.success('Repositories refreshed')
+    } catch {
+      toast.error('Failed to refresh')
+    } finally {
+      refreshing.current = false
+    }
+  }
 
   async function handleReindex(id: string) {
     try {
@@ -168,35 +186,34 @@ export function IndexingPage() {
     }
   }
 
-  const filtered = repos.filter((r) => r.name.toLowerCase().includes(searchQuery.toLowerCase()))
-
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900">Repositories</h1>
-          <p className="mt-0.5 text-sm text-zinc-500">
-            Manage indexed repos — the agent searches these to trace bugs.
+          <h1 className="text-3xl font-bold text-on-background" style={{ fontFamily: 'Geist, Inter, sans-serif' }}>
+            Repositories
+          </h1>
+          <p className="mt-1 text-sm text-on-surface-variant">
+            Manage connected codebases, view active investigation jobs, and synchronize latest branch structures.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <button
-            onClick={refresh}
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 text-zinc-400 transition-colors hover:bg-white hover:text-zinc-600"
+            onClick={handleRefresh}
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-outline-variant text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface"
             title="Refresh"
           >
-            <RiRefreshLine className="text-base" />
+            <RiRefreshLine />
           </button>
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
+            className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-on-primary shadow-[0_4px_6px_-1px_rgb(0,0,0,0.1)] transition active:scale-[0.98] hover:opacity-90"
           >
-            <RiAddLine /> Add Repo
+            <RiAddLine /> Connect GitHub Repository
           </button>
         </div>
       </div>
-
-      {stats && <StatsBar stats={stats} />}
 
       {repos.length > 4 && (
         <input
@@ -204,49 +221,62 @@ export function IndexingPage() {
           placeholder="Filter repositories…"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full max-w-sm rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-400"
+          className="w-full max-w-sm rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
         />
       )}
 
       {loading && (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <RepoCardSkeleton key={i} />
-          ))}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => <RepoCardSkeleton key={i} />)}
         </div>
       )}
 
       {error && (
-        <div className="flex items-center gap-2 rounded-xl border border-red-100 bg-red-50 p-4 text-sm text-red-700">
+        <div className="flex items-center gap-2 rounded-xl border border-error-container bg-error-container px-4 py-3 text-sm text-on-error-container">
           <RiAlertLine className="shrink-0" /> {error}
         </div>
       )}
 
       {!loading && !error && filtered.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <RiInboxLine className="mb-3 text-5xl text-zinc-300" />
-          <h3 className="font-semibold text-zinc-700">
-            {searchQuery ? 'No repos match your search' : 'No repos indexed yet'}
-          </h3>
-          <p className="mt-1 text-sm text-zinc-400">
-            {searchQuery ? 'Try a different name.' : 'Add a repo to get started.'}
-          </p>
-          {!searchQuery && (
-            <button
-              onClick={() => setShowModal(true)}
-              className="mt-4 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
-            >
-              Add your first repo
-            </button>
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          {searchQuery ? (
+            <>
+              <RiInboxLine className="mb-3 text-5xl text-outline" />
+              <h3 className="font-semibold text-on-surface">No repos match your search</h3>
+              <p className="mt-1 text-sm text-on-surface-variant">Try a different name.</p>
+            </>
+          ) : (
+            <>
+              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-surface-container text-3xl text-on-surface-variant">
+                <RiGitRepositoryLine />
+              </div>
+              <h3 className="font-semibold text-on-surface">No repos indexed yet</h3>
+              <p className="mt-1 text-sm text-on-surface-variant">Add a repo to get started.</p>
+              <button
+                onClick={() => setShowModal(true)}
+                className="mt-4 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-on-primary transition hover:opacity-90"
+              >
+                Connect your first repo
+              </button>
+            </>
           )}
         </div>
       )}
 
       {!loading && filtered.length > 0 && (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filtered.map((repo) => (
             <RepoCard key={repo.id} repo={repo} onReindex={handleReindex} onDelete={handleDelete} />
           ))}
+          {/* Add new card */}
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex min-h-[160px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-outline-variant bg-surface-container-lowest/50 text-on-surface-variant transition-colors hover:border-primary/50 hover:bg-primary/5 hover:text-primary"
+          >
+            <RiAddLine className="text-2xl" />
+            <span className="text-sm font-medium">Add New Repository</span>
+            <span className="text-xs text-on-surface-variant">Connect another codebase</span>
+          </button>
         </div>
       )}
 

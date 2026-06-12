@@ -1,6 +1,12 @@
 import type { ReactNode } from 'react'
-import { RiChat1Line, RiFlashlightLine, RiGitRepositoryLine } from 'react-icons/ri'
+import {
+  RiBugLine,
+  RiChat1Line,
+  RiDashboard2Line,
+  RiGitRepositoryLine,
+} from 'react-icons/ri'
 import { ChatPage } from '../pages/ChatPage'
+import { DashboardPage } from '../pages/DashboardPage'
 import { IndexingPage } from '../pages/IndexingPage'
 import { JobsPage } from '../pages/JobsPage'
 
@@ -15,17 +21,24 @@ export interface RouteConfig {
 
 export const ROUTES: RouteConfig[] = [
   {
+    path: '/dashboard',
+    label: 'Dashboard',
+    description: 'System health and active investigations',
+    icon: <RiDashboard2Line />,
+    element: <DashboardPage />,
+  },
+  {
     path: '/indexing',
     label: 'Repositories',
-    description: 'Manage indexed repos for the agent',
+    description: 'Manage connected codebases for the agent',
     icon: <RiGitRepositoryLine />,
     element: <IndexingPage />,
   },
   {
     path: '/jobs',
-    label: 'Jobs',
-    description: 'Live investigation & fix pipeline',
-    icon: <RiFlashlightLine />,
+    label: 'Investigations',
+    description: 'Live investigation and fix pipeline runs',
+    icon: <RiBugLine />,
     element: <JobsPage />,
   },
   {
