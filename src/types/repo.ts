@@ -11,6 +11,8 @@ export interface Repo {
   lastIndexed: string | null
   error: string | null
   autoReindex: boolean
+  filesTotal: number
+  filesDone: number
 }
 
 export interface RepoStats {

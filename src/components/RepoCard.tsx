@@ -152,7 +152,12 @@ export function RepoCard({ repo, onReindex, onDelete }: Props) {
         </p>
       )}
 
-      <IndexProgress chunksIndexed={repo.chunksIndexed} isActive={isActive} />
+      <IndexProgress
+        chunksIndexed={repo.chunksIndexed}
+        filesTotal={repo.filesTotal ?? 0}
+        filesDone={repo.filesDone ?? 0}
+        isActive={isActive}
+      />
 
       <p className="mt-3 text-xs text-zinc-400">Last indexed: {formatDate(repo.lastIndexed)}</p>
     </div>

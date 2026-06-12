@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect } from 'react'
 import { reposService } from '../services'
 import type { AddRepoPayload, Repo } from '../types'
 
@@ -12,6 +13,31 @@ export function useRepos() {
     queryKey: REPOS_KEY,
     queryFn: reposService.list,
   })
+
+  useEffect(() => {
+    const es = reposService.stream()
+
+    es.addEventListener('repo_update', (e: MessageEvent<string>) => {
+      try {
+        const updated: Repo = JSON.parse(e.data)
+        queryClient.setQueryData<Repo[]>(REPOS_KEY, (prev) => {
+          if (!prev) return [updated]
+          const idx = prev.findIndex((r) => r.id === updated.id)
+          if (idx === -1) return prev
+          const next = [...prev]
+          next[idx] = updated
+          return next
+        })
+        if (updated.status === 'indexed' || updated.status === 'error') {
+          void queryClient.invalidateQueries({ queryKey: STATS_KEY })
+        }
+      } catch {
+        // Ignore malformed stream events.
+      }
+    })
+
+    return () => es.close()
+  }, [queryClient])
 
   const statsQuery = useQuery({
     queryKey: STATS_KEY,
