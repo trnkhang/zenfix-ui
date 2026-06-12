@@ -28,6 +28,10 @@ coverage/
 # TypeScript
 *.tsbuildinfo
 
+# Claude and Codex local configs
+.claude/
+.codex/
+
 # OS and editor files
 .DS_Store
 Thumbs.db
