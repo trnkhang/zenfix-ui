@@ -29,5 +29,7 @@ export interface Job {
     jiraUrl?: string
     prNumber?: number
     prUrl?: string
+    offendingCommit?: string
+    commitMessage?: string
   }
 }
