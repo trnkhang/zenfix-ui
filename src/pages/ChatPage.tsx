@@ -1,16 +1,20 @@
 import { useEffect, useRef, useState } from 'react'
-import { RiSendPlane2Line } from 'react-icons/ri'
+import {
+  RiCheckLine,
+  RiCloseLine,
+  RiErrorWarningLine,
+  RiLoader4Line,
+  RiRadioButtonLine,
+  RiSendPlane2Line,
+} from 'react-icons/ri'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { ZenfixMark } from '../components/ZenfixLogo'
-import { chatService, reposService } from '../services'
+import { chatService, jobsService, reposService } from '../services'
+import type { Job, JobStep } from '../types/job'
 import type { Repo } from '../types'
 
-interface Message {
-  role: 'user' | 'assistant'
-  content: string
-  chunksUsed?: number
-}
+// ── Markdown renderer ─────────────────────────────────────────────────────────
 
 function MarkdownContent({ content }: { content: string }) {
   return (
@@ -28,15 +32,10 @@ function MarkdownContent({ content }: { content: string }) {
         em: ({ children }) => <em className="italic">{children}</em>,
         hr: () => <hr className="my-3 border-outline-variant" />,
         a: ({ href, children }) => (
-          <a href={href} target="_blank" rel="noopener noreferrer"
-            className="text-primary underline hover:opacity-80">
-            {children}
-          </a>
+          <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary underline hover:opacity-80">{children}</a>
         ),
         blockquote: ({ children }) => (
-          <blockquote className="my-2 border-l-2 border-primary/40 pl-3 text-on-surface-variant italic">
-            {children}
-          </blockquote>
+          <blockquote className="my-2 border-l-2 border-primary/40 pl-3 text-on-surface-variant italic">{children}</blockquote>
         ),
         code: ({ className, children, ...props }) => {
           const isBlock = className?.startsWith('language-')
@@ -45,7 +44,7 @@ function MarkdownContent({ content }: { content: string }) {
             return (
               <div className="my-2 overflow-hidden rounded-lg border border-outline-variant bg-[#1e1e2e]">
                 {lang && (
-                  <div className="flex items-center justify-between border-b border-white/10 px-3 py-1.5">
+                  <div className="flex items-center border-b border-white/10 px-3 py-1.5">
                     <span className="font-mono text-[11px] text-white/50">{lang}</span>
                   </div>
                 )}
@@ -55,14 +54,7 @@ function MarkdownContent({ content }: { content: string }) {
               </div>
             )
           }
-          return (
-            <code
-              className="rounded bg-surface-container-high px-1.5 py-0.5 font-mono text-[12px] text-on-surface"
-              {...props}
-            >
-              {children}
-            </code>
-          )
+          return <code className="rounded bg-surface-container-high px-1.5 py-0.5 font-mono text-[12px] text-on-surface" {...props}>{children}</code>
         },
         pre: ({ children }) => <>{children}</>,
         table: ({ children }) => (
@@ -70,23 +62,11 @@ function MarkdownContent({ content }: { content: string }) {
             <table className="w-full border-collapse text-sm">{children}</table>
           </div>
         ),
-        thead: ({ children }) => (
-          <thead className="bg-surface-container-low">{children}</thead>
-        ),
-        tbody: ({ children }) => (
-          <tbody className="divide-y divide-outline-variant/50">{children}</tbody>
-        ),
-        tr: ({ children }) => (
-          <tr className="transition-colors hover:bg-surface-container-low/50">{children}</tr>
-        ),
-        th: ({ children }) => (
-          <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
-            {children}
-          </th>
-        ),
-        td: ({ children }) => (
-          <td className="px-4 py-2.5 text-sm text-on-surface">{children}</td>
-        ),
+        thead: ({ children }) => <thead className="bg-surface-container-low">{children}</thead>,
+        tbody: ({ children }) => <tbody className="divide-y divide-outline-variant/50">{children}</tbody>,
+        tr: ({ children }) => <tr className="transition-colors hover:bg-surface-container-low/50">{children}</tr>,
+        th: ({ children }) => <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-on-surface-variant">{children}</th>,
+        td: ({ children }) => <td className="px-4 py-2.5 text-sm text-on-surface">{children}</td>,
       }}
     >
       {content}
@@ -94,21 +74,161 @@ function MarkdownContent({ content }: { content: string }) {
   )
 }
 
-const SUGGESTED = [
+// ── Job step indicator ────────────────────────────────────────────────────────
+
+function StepIcon({ status }: { status: JobStep['status'] }) {
+  if (status === 'done')    return <RiCheckLine className="text-[13px] text-green-600" />
+  if (status === 'running') return <RiLoader4Line className="animate-spin text-[13px] text-primary" />
+  if (status === 'failed')  return <RiCloseLine className="text-[13px] text-error" />
+  return <RiRadioButtonLine className="text-[13px] text-outline" />
+}
+
+// ── Investigation result card ─────────────────────────────────────────────────
+
+function InvestigationCard({ job }: { job: Job }) {
+  const r = job.result
+  const isDone   = job.status === 'done'
+  const isFailed = job.status === 'failed'
+
+  return (
+    <div className="rounded-xl border border-outline-variant bg-surface-container-lowest text-sm overflow-hidden">
+      <div className="flex items-center gap-2 border-b border-outline-variant px-4 py-3 bg-surface-container-low">
+        {job.status === 'running' && <RiLoader4Line className="animate-spin text-primary" />}
+        {isDone  && <RiCheckLine className="text-green-600" />}
+        {isFailed && <RiErrorWarningLine className="text-error" />}
+        <span className="font-semibold text-on-surface">
+          {job.status === 'running' ? 'Investigating…' : isDone ? 'Investigation complete' : 'Investigation failed'}
+        </span>
+        {isDone && r?.confidence !== undefined && (
+          <span className="ml-auto rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+            {Math.round(r.confidence * 100)}% confidence
+          </span>
+        )}
+      </div>
+
+      <div className="px-4 py-3 space-y-1.5">
+        {job.steps.map((step) => (
+          <div key={step.name} className="flex items-start gap-2">
+            <span className="mt-0.5 shrink-0"><StepIcon status={step.status} /></span>
+            <div className="min-w-0">
+              <span className={`text-xs ${step.status === 'pending' ? 'text-on-surface-variant' : 'text-on-surface'}`}>
+                {step.name}
+              </span>
+              {step.detail && (
+                <p className="mt-0.5 truncate text-[11px] text-on-surface-variant">{step.detail}</p>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {isDone && r && (
+        <div className="border-t border-outline-variant px-4 py-4 space-y-3">
+          {r.summary && (
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-on-surface-variant mb-1">Root Cause</p>
+              <p className="text-sm text-on-surface leading-relaxed">{r.summary}</p>
+            </div>
+          )}
+
+          {r.fixDirection && (
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-on-surface-variant mb-1">Fix Direction</p>
+              <p className="text-sm text-on-surface leading-relaxed whitespace-pre-wrap">{r.fixDirection}</p>
+            </div>
+          )}
+
+          {r.affectedFiles && r.affectedFiles.length > 0 && (
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-on-surface-variant mb-1">Affected Files</p>
+              <div className="flex flex-wrap gap-1.5">
+                {r.affectedFiles.map((f) => (
+                  <span key={f} className="rounded-md bg-surface-container-high px-2 py-0.5 font-mono text-[11px] text-on-surface">
+                    {f}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {(r.jiraKey || r.prNumber) && (
+            <div className="flex flex-wrap gap-3 pt-1">
+              {r.jiraKey && r.jiraUrl && (
+                <a href={r.jiraUrl} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 rounded-lg border border-outline-variant px-3 py-1.5 text-xs font-medium text-on-surface hover:bg-surface-container transition-colors">
+                  🎫 {r.jiraKey}
+                </a>
+              )}
+              {r.prNumber && r.prUrl && (
+                <a href={r.prUrl} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 rounded-lg border border-outline-variant px-3 py-1.5 text-xs font-medium text-on-surface hover:bg-surface-container transition-colors">
+                  🔀 PR #{r.prNumber}
+                </a>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {isFailed && (
+        <div className="border-t border-outline-variant px-4 py-3">
+          <p className="text-xs text-error">{r?.error ?? 'Unknown error — check server logs.'}</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Message types ─────────────────────────────────────────────────────────────
+
+type Mode = 'ask' | 'investigate'
+
+interface AskMessage {
+  type: 'ask'
+  role: 'user' | 'assistant'
+  content: string
+  chunksUsed?: number
+}
+
+interface InvestigateMessage {
+  type: 'investigate'
+  role: 'user' | 'assistant'
+  content: string
+  jobId: string
+  job: Job
+}
+
+type Message = AskMessage | InvestigateMessage
+
+const ASK_SUGGESTED = [
   'What does this repo do?',
   'What are the main components?',
   'How is the database accessed?',
   'Where is authentication handled?',
 ]
 
+const INVESTIGATE_SUGGESTED = [
+  'Users get a 500 error on checkout',
+  'Pagination returns wrong page',
+  'Cart total ignores item quantity',
+  'Login fails silently after session expires',
+]
+
+// ── Main component ────────────────────────────────────────────────────────────
+
 export function ChatPage() {
-  const [repos, setRepos]               = useState<Repo[]>([])
+  const [repos, setRepos]           = useState<Repo[]>([])
   const [selectedRepoId, setSelectedRepoId] = useState<string>('')
-  const [messages, setMessages]         = useState<Message[]>([])
-  const [input, setInput]               = useState('')
-  const [loading, setLoading]           = useState(false)
-  const [error, setError]               = useState<string | null>(null)
+  const [mode, setMode]             = useState<Mode>('ask')
+  const [messages, setMessages]     = useState<Message[]>([])
+  const [input, setInput]           = useState('')
+  const [errorMsg, setErrorMsg]     = useState('')
+  const [stackTrace, setStackTrace] = useState('')
+  const [showAdvanced, setShowAdvanced] = useState(false)
+  const [loading, setLoading]       = useState(false)
+  const [error, setError]           = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const pollRef   = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     reposService.list().then((data) => {
@@ -122,21 +242,79 @@ export function ChatPage() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
 
+  useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current) }, [])
+
+  const selectedRepo = repos.find((r) => r.id === selectedRepoId)
+
+  function switchMode(m: Mode) {
+    setMode(m)
+    setInput('')
+    setErrorMsg('')
+    setStackTrace('')
+    setShowAdvanced(false)
+  }
+
+  async function handleAsk(q: string) {
+    if (!selectedRepoId) return
+    setMessages((prev) => [...prev, { type: 'ask', role: 'user', content: q }])
+    setLoading(true)
+    try {
+      const res = await chatService.ask(selectedRepoId, { question: q })
+      setMessages((prev) => [...prev, { type: 'ask', role: 'assistant', content: res.answer, chunksUsed: res.chunks_used }])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Request failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleInvestigate(description: string) {
+    if (!selectedRepo) return
+    setMessages((prev) => [...prev, { type: 'investigate', role: 'user', content: description, jobId: '', job: {} as Job }])
+    setLoading(true)
+    try {
+      const job = await jobsService.create({
+        repo: selectedRepo.name,
+        description,
+        error_message: errorMsg || undefined,
+        stack_trace: stackTrace || undefined,
+        severity: 'medium',
+      })
+
+      const investigationMsg: InvestigateMessage = { type: 'investigate', role: 'assistant', content: '', jobId: job.id, job }
+      setMessages((prev) => [...prev, investigationMsg])
+      setLoading(false)
+
+      pollRef.current = setInterval(async () => {
+        try {
+          const updated = await jobsService.get(job.id)
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.type === 'investigate' && m.jobId === job.id ? { ...m, job: updated } : m,
+            ),
+          )
+          if (updated.status === 'done' || updated.status === 'failed') {
+            clearInterval(pollRef.current!)
+            pollRef.current = null
+          }
+        } catch { /* ignore transient poll errors */ }
+      }, 2000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to start investigation')
+      setLoading(false)
+    }
+  }
+
   async function handleSend(e: React.FormEvent) {
     e.preventDefault()
     const q = input.trim()
     if (!q || !selectedRepoId || loading) return
     setInput('')
     setError(null)
-    setMessages((prev) => [...prev, { role: 'user', content: q }])
-    setLoading(true)
-    try {
-      const res = await chatService.ask(selectedRepoId, { question: q })
-      setMessages((prev) => [...prev, { role: 'assistant', content: res.answer, chunksUsed: res.chunks_used }])
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Request failed')
-    } finally {
-      setLoading(false)
+    if (mode === 'ask') {
+      await handleAsk(q)
+    } else {
+      await handleInvestigate(q)
     }
   }
 
@@ -147,54 +325,64 @@ export function ChatPage() {
     }
   }
 
-  const selectedRepo = repos.find((r) => r.id === selectedRepoId)
+  const suggested = mode === 'ask' ? ASK_SUGGESTED : INVESTIGATE_SUGGESTED
+  const isEmpty = messages.length === 0 && !loading
 
   return (
     <div className="flex h-[calc(100vh-64px)] flex-col bg-background">
+      {/* Header */}
       <div className="flex items-center gap-4 border-b border-outline-variant bg-surface-container-lowest px-8 py-3">
-        <span className="text-sm font-medium text-on-surface-variant whitespace-nowrap">Repository:</span>
+        <span className="text-sm font-medium text-on-surface-variant whitespace-nowrap">Repo:</span>
         {repos.length === 0 ? (
-          <p className="text-sm text-on-surface-variant">No indexed repos — add one in Repositories first.</p>
+          <p className="text-sm text-on-surface-variant">No indexed repos.</p>
         ) : (
           <select
             value={selectedRepoId}
             onChange={(e) => { setSelectedRepoId(e.target.value); setMessages([]) }}
             className="rounded-lg border border-outline-variant bg-surface-container px-3 py-1.5 text-sm text-on-surface outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
           >
-            {repos.map((r) => (
-              <option key={r.id} value={r.id}>{r.name}</option>
-            ))}
+            {repos.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
           </select>
         )}
-        {selectedRepo && (
-          <span className="font-mono text-xs text-on-surface-variant">
-            {selectedRepo.chunksIndexed.toLocaleString()} chunks indexed
-          </span>
-        )}
+
+        <div className="flex rounded-lg border border-outline-variant bg-surface-container overflow-hidden">
+          {(['ask', 'investigate'] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => switchMode(m)}
+              className={`px-3 py-1.5 text-xs font-medium capitalize transition-colors ${
+                mode === m
+                  ? 'bg-primary text-on-primary'
+                  : 'text-on-surface-variant hover:bg-surface-container-high'
+              }`}
+            >
+              {m === 'ask' ? 'Ask' : 'Investigate'}
+            </button>
+          ))}
+        </div>
+
         {messages.length > 0 && (
-          <button
-            onClick={() => setMessages([])}
-            className="ml-auto text-xs text-on-surface-variant hover:text-on-surface"
-          >
+          <button onClick={() => setMessages([])} className="ml-auto text-xs text-on-surface-variant hover:text-on-surface">
             Clear
           </button>
         )}
       </div>
 
+      {/* Messages */}
       <div className="flex-1 overflow-y-auto px-8 py-8 space-y-6">
-        {messages.length === 0 && !loading && (
+        {isEmpty && (
           <div className="flex flex-col items-center justify-center h-full text-center pb-16">
-            <div className="mb-4">
-              <ZenfixMark size={56} />
-            </div>
+            <div className="mb-4"><ZenfixMark size={56} /></div>
             <p className="font-semibold text-on-surface" style={{ fontFamily: 'Geist, Inter, sans-serif' }}>
-              Ask anything about the repo
+              {mode === 'ask' ? 'Ask anything about the repo' : 'Describe a bug to investigate'}
             </p>
             <p className="mt-1 text-sm text-on-surface-variant">
-              e.g. "What does this repo do?", "Where is auth handled?", "How is the DB structured?"
+              {mode === 'ask'
+                ? 'Semantic search over the indexed codebase'
+                : 'Zenfix will trace the root cause and propose a fix'}
             </p>
             <div className="mt-5 flex flex-wrap justify-center gap-2">
-              {SUGGESTED.map((q) => (
+              {suggested.map((q) => (
                 <button
                   key={q}
                   onClick={() => setInput(q)}
@@ -207,47 +395,48 @@ export function ChatPage() {
           </div>
         )}
 
-        {messages.map((msg, i) => (
-          <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            {msg.role === 'assistant' && (
-              <div className="mr-3 shrink-0">
-                <ZenfixMark size={28} />
+        {messages.map((msg, i) => {
+          if (msg.type === 'investigate' && msg.role === 'assistant') {
+            return (
+              <div key={i} className="flex justify-start">
+                <div className="mr-3 shrink-0"><ZenfixMark size={28} /></div>
+                <div className="max-w-[80%] min-w-[320px]">
+                  <InvestigationCard job={msg.job} />
+                </div>
               </div>
-            )}
-            <div className={`max-w-[75%] ${msg.role === 'user' ? 'order-first' : ''}`}>
-              <div
-                className={`rounded-2xl px-4 py-3 text-sm ${
+            )
+          }
+
+          return (
+            <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              {msg.role === 'assistant' && (
+                <div className="mr-3 shrink-0"><ZenfixMark size={28} /></div>
+              )}
+              <div className={`max-w-[75%] ${msg.role === 'user' ? 'order-first' : ''}`}>
+                <div className={`rounded-2xl px-4 py-3 text-sm ${
                   msg.role === 'user'
                     ? 'rounded-tr-sm bg-primary text-on-primary leading-relaxed whitespace-pre-wrap'
                     : 'rounded-tl-sm border border-outline-variant bg-surface-container-lowest text-on-surface'
-                }`}
-              >
-                {msg.role === 'user'
-                  ? msg.content
-                  : <MarkdownContent content={msg.content} />}
+                }`}>
+                  {msg.role === 'user'
+                    ? msg.content
+                    : msg.type === 'ask' && <MarkdownContent content={msg.content} />}
+                </div>
+                {msg.type === 'ask' && msg.role === 'assistant' && msg.chunksUsed !== undefined && (
+                  <p className="mt-1 px-1 text-[11px] text-on-surface-variant font-mono">{msg.chunksUsed} chunks used</p>
+                )}
               </div>
-              {msg.role === 'assistant' && msg.chunksUsed !== undefined && (
-                <p className="mt-1 px-1 text-[11px] text-on-surface-variant font-mono">
-                  {msg.chunksUsed} chunks used
-                </p>
-              )}
             </div>
-          </div>
-        ))}
+          )
+        })}
 
         {loading && (
           <div className="flex justify-start">
-            <div className="mr-3 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs text-on-primary font-bold">
-              Z
-            </div>
+            <div className="mr-3 shrink-0"><ZenfixMark size={28} /></div>
             <div className="rounded-2xl rounded-tl-sm border border-outline-variant bg-surface-container-lowest px-4 py-3">
               <div className="flex gap-1">
                 {[0, 150, 300].map((d) => (
-                  <span
-                    key={d}
-                    className="h-1.5 w-1.5 animate-bounce rounded-full bg-outline"
-                    style={{ animationDelay: `${d}ms` }}
-                  />
+                  <span key={d} className="h-1.5 w-1.5 animate-bounce rounded-full bg-outline" style={{ animationDelay: `${d}ms` }} />
                 ))}
               </div>
             </div>
@@ -263,18 +452,55 @@ export function ChatPage() {
         <div ref={bottomRef} />
       </div>
 
-      <div className="border-t border-outline-variant bg-surface-container-lowest px-8 py-4">
+      {/* Input area */}
+      <div className="border-t border-outline-variant bg-surface-container-lowest px-8 py-4 space-y-3">
+        {mode === 'investigate' && showAdvanced && (
+          <div className="space-y-2">
+            <textarea
+              rows={2}
+              placeholder="Error message (optional)"
+              value={errorMsg}
+              onChange={(e) => setErrorMsg(e.target.value)}
+              className="w-full resize-none rounded-lg border border-outline-variant bg-surface-container px-3 py-2 font-mono text-xs text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+            />
+            <textarea
+              rows={3}
+              placeholder="Stack trace (optional)"
+              value={stackTrace}
+              onChange={(e) => setStackTrace(e.target.value)}
+              className="w-full resize-none rounded-lg border border-outline-variant bg-surface-container px-3 py-2 font-mono text-xs text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+            />
+          </div>
+        )}
+
         <form onSubmit={handleSend} className="flex items-end gap-3">
-          <textarea
-            rows={1}
-            placeholder={selectedRepoId ? 'Ask about the codebase… (Enter to send)' : 'Select a repo first'}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={!selectedRepoId || loading}
-            className="flex-1 resize-none rounded-xl border border-outline-variant bg-surface-container px-4 py-2.5 text-sm text-on-surface outline-none transition focus:border-primary focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
-            style={{ maxHeight: '120px' }}
-          />
+          <div className="flex flex-1 flex-col gap-1.5">
+            {mode === 'investigate' && (
+              <button
+                type="button"
+                onClick={() => setShowAdvanced((v) => !v)}
+                className="self-start text-[11px] text-on-surface-variant hover:text-primary transition-colors"
+              >
+                {showAdvanced ? '− Hide' : '+ Add error / stack trace'}
+              </button>
+            )}
+            <textarea
+              rows={1}
+              placeholder={
+                !selectedRepoId
+                  ? 'Select a repo first'
+                  : mode === 'ask'
+                  ? 'Ask about the codebase… (Enter to send)'
+                  : 'Describe the bug… (Enter to send)'
+              }
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={!selectedRepoId || loading}
+              className="w-full resize-none rounded-xl border border-outline-variant bg-surface-container px-4 py-2.5 text-sm text-on-surface outline-none transition focus:border-primary focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
+              style={{ maxHeight: '120px' }}
+            />
+          </div>
           <button
             type="submit"
             disabled={!input.trim() || !selectedRepoId || loading}

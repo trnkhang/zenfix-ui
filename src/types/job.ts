@@ -19,10 +19,15 @@ export interface Job {
   completedAt?: string
   result?: {
     summary?: string
+    fixDirection?: string
+    affectedFiles?: string[]
+    confidence?: number
+    investigationSteps?: string[]
+    isComplex?: boolean
+    error?: string
     jiraKey?: string
     jiraUrl?: string
     prNumber?: number
     prUrl?: string
-    isComplex?: boolean
   }
 }
