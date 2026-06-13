@@ -1,4 +1,6 @@
+import { useEffect, useRef } from 'react'
 import {
+  RiArrowRightLine,
   RiCheckLine,
   RiCloseCircleLine,
   RiGitMergeLine,
@@ -28,6 +30,7 @@ const STEP_ICON: Record<JobStep['status'], React.ReactNode> = {
   running: <RiLoader4Line className="animate-spin text-primary" />,
   done:    <RiCheckLine className="text-green-600" />,
   failed:  <RiCloseCircleLine className="text-error" />,
+  skipped: <RiArrowRightLine className="text-on-surface-variant" />,
 }
 
 const STEP_TEXT: Record<JobStep['status'], string> = {
@@ -35,6 +38,26 @@ const STEP_TEXT: Record<JobStep['status'], string> = {
   running: 'text-on-surface',
   done:    'text-on-surface',
   failed:  'text-on-surface',
+  skipped: 'text-on-surface-variant line-through',
+}
+
+export const StepLog = ({ detail }: { detail: string }) => {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (ref.current) ref.current.scrollTop = ref.current.scrollHeight
+  }, [detail])
+  return (
+    <div
+      ref={ref}
+      className="mt-1.5 max-h-32 overflow-y-auto rounded bg-zinc-950 px-3 py-2 font-mono text-[11px] leading-relaxed text-zinc-300"
+    >
+      {detail.split('\n').map((line, i) => (
+        <div key={i} className="whitespace-pre-wrap">
+          <span className="select-none text-zinc-600">{'> '}</span>{line}
+        </div>
+      ))}
+    </div>
+  )
 }
 
 function formatTime(iso: string): string {
@@ -94,9 +117,10 @@ export function JobCard({ job, repoId }: Props) {
               <span className="mt-0.5 text-sm">{STEP_ICON[step.status]}</span>
               <div className="min-w-0 flex-1">
                 <span className={`text-sm ${STEP_TEXT[step.status]}`}>{step.name}</span>
-                {step.detail && (
-                  <p className="truncate text-xs text-on-surface-variant">{step.detail}</p>
-                )}
+                {step.status === 'running' && step.detail
+                  ? <StepLog detail={step.detail} />
+                  : step.detail && <p className="truncate text-xs text-on-surface-variant">{step.detail}</p>
+                }
               </div>
             </div>
           ))}

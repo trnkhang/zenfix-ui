@@ -7,6 +7,7 @@ import {
   RiRadioButtonLine,
   RiRefreshLine,
 } from 'react-icons/ri'
+import { Link } from 'react-router-dom'
 import { JobCard } from '../components/JobCard'
 import { JobCardSkeleton } from '../components/Skeleton'
 import { useJobs } from '../hooks/useJobs'
@@ -121,11 +122,11 @@ export function JobsPage() {
             {filter !== 'all' || search ? 'No jobs match your filter' : 'No jobs yet'}
           </h3>
           <p className="mt-1 text-sm text-on-surface-variant">
-            Mention{' '}
-            <code className="rounded bg-surface-container px-1.5 py-0.5 text-on-surface">
-              @Zenfix repo:owner/repo &lt;bug&gt;
-            </code>{' '}
-            in Teams to start one.
+            Describe a bug in{' '}
+            <Link to="/chat" className="font-medium text-primary hover:underline">
+              Chat
+            </Link>{' '}
+            to start one.
           </p>
         </div>
       )}

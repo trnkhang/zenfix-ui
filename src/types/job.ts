@@ -2,7 +2,7 @@ export type JobStatus = 'pending' | 'running' | 'done' | 'failed'
 
 export interface JobStep {
   name: string
-  status: 'pending' | 'running' | 'done' | 'failed'
+  status: 'pending' | 'running' | 'done' | 'failed' | 'skipped'
   detail?: string
   startedAt?: string
   completedAt?: string

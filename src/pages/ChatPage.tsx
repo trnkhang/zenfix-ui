@@ -1,18 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import {
-  RiCheckLine,
-  RiCloseLine,
-  RiErrorWarningLine,
-  RiLoader4Line,
-  RiRadioButtonLine,
-  RiSendPlane2Line,
-} from 'react-icons/ri'
+import { RiArrowRightLine, RiCheckLine, RiCloseCircleLine, RiLoader4Line, RiRadioButtonLine, RiSendPlane2Line, RiToolsLine } from 'react-icons/ri'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { Link } from 'react-router-dom'
 import { ZenfixMark } from '../components/ZenfixLogo'
-import { chatService, jobsService, reposService } from '../services'
-import type { Job, JobStep } from '../types/job'
-import type { Repo } from '../types'
+import { chatService, reposService } from '../services'
+import type { Job, JobStep, Repo } from '../types'
 
 // ── Markdown renderer ─────────────────────────────────────────────────────────
 
@@ -74,121 +67,82 @@ function MarkdownContent({ content }: { content: string }) {
   )
 }
 
-// ── Job step indicator ────────────────────────────────────────────────────────
+// ── Inline investigation card ─────────────────────────────────────────────────
 
-function StepIcon({ status }: { status: JobStep['status'] }) {
-  if (status === 'done')    return <RiCheckLine className="text-[13px] text-green-600" />
-  if (status === 'running') return <RiLoader4Line className="animate-spin text-[13px] text-primary" />
-  if (status === 'failed')  return <RiCloseLine className="text-[13px] text-error" />
-  return <RiRadioButtonLine className="text-[13px] text-outline" />
+const STEP_ICON: Record<JobStep['status'], React.ReactNode> = {
+  pending: <RiRadioButtonLine className="text-outline" />,
+  running: <RiLoader4Line className="animate-spin text-primary" />,
+  done:    <RiCheckLine className="text-green-600" />,
+  failed:  <RiCloseCircleLine className="text-error" />,
+  skipped: <RiArrowRightLine className="text-on-surface-variant" />,
 }
 
-// ── Investigation result card ─────────────────────────────────────────────────
+export const StepLog = ({ detail }: { detail: string }) => {
+  const logRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight
+  }, [detail])
+  return (
+    <div
+      ref={logRef}
+      className="mt-1.5 max-h-28 overflow-y-auto rounded bg-zinc-950 px-3 py-2 font-mono text-[11px] leading-relaxed text-zinc-300"
+    >
+      {detail.split('\n').map((line, i) => (
+        <div key={i} className="whitespace-pre-wrap">
+          <span className="select-none text-zinc-600">{'> '}</span>{line}
+        </div>
+      ))}
+    </div>
+  )
+}
 
 function InvestigationCard({ job }: { job: Job }) {
-  const r = job.result
-  const isDone   = job.status === 'done'
-  const isFailed = job.status === 'failed'
-
   return (
-    <div className="rounded-xl border border-outline-variant bg-surface-container-lowest text-sm overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center gap-2 border-b border-outline-variant px-4 py-3 bg-surface-container-low">
-        {job.status === 'running' && <RiLoader4Line className="animate-spin text-primary" />}
-        {isDone   && <RiCheckLine className="text-green-600" />}
-        {isFailed && <RiErrorWarningLine className="text-error" />}
-        <span className="rounded-full bg-error/10 px-2 py-0.5 text-[11px] font-semibold text-error">Bug</span>
-        <span className="font-semibold text-on-surface">
-          {job.status === 'running' ? 'Investigating…' : isDone ? 'Investigation complete' : 'Investigation failed'}
-        </span>
-        {isDone && r?.confidence !== undefined && (
-          <span className="ml-auto rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-            {Math.round(r.confidence * 100)}% confidence
+    <div className="rounded-xl border border-primary/20 bg-surface-container-lowest p-4 shadow-sm">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 min-w-0">
+          <RiToolsLine className="shrink-0 text-primary" />
+          <span className="font-mono text-xs text-on-surface-variant bg-surface-container border border-outline-variant rounded px-2 py-0.5">
+            #{job.id.slice(0, 8)}
           </span>
-        )}
+          <span className="text-sm font-semibold text-on-surface truncate" style={{ fontFamily: 'Geist, Inter, sans-serif' }}>
+            Investigation started
+          </span>
+        </div>
+        <span className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-primary-fixed px-2.5 py-1 text-xs font-medium text-primary ring-1 ring-primary-fixed-dim">
+          <RiLoader4Line className="animate-spin" /> Running
+        </span>
       </div>
 
-      {/* Live steps */}
-      <div className="px-4 py-3 space-y-1.5">
-        {job.steps.map((step) => (
-          <div key={step.name} className="flex items-start gap-2">
-            <span className="mt-0.5 shrink-0"><StepIcon status={step.status} /></span>
-            <div className="min-w-0">
-              <span className={`text-xs ${step.status === 'pending' ? 'text-on-surface-variant' : 'text-on-surface'}`}>
-                {step.name}
-              </span>
-              {step.detail && (
-                <p className="mt-0.5 truncate text-[11px] text-on-surface-variant">{step.detail}</p>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
+      <p className="mt-2 text-xs text-on-surface-variant line-clamp-2">{job.description}</p>
 
-      {/* Result */}
-      {isDone && r && (
-        <div className="border-t border-outline-variant px-4 py-4 space-y-3">
-          {r.summary && (
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-on-surface-variant mb-1">Root Cause</p>
-              <p className="text-sm text-on-surface leading-relaxed">{r.summary}</p>
-            </div>
-          )}
-
-          {r.affectedFiles && r.affectedFiles.length > 0 && (
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-on-surface-variant mb-1">Location</p>
-              <div className="flex flex-wrap gap-1.5">
-                {r.affectedFiles.map((f) => (
-                  <span key={f} className="rounded-md bg-surface-container-high px-2 py-0.5 font-mono text-[11px] text-on-surface">
-                    {f}
-                  </span>
-                ))}
+      {job.steps.length > 0 && (
+        <div className="mt-3 space-y-1 rounded-lg bg-surface-container-low p-2.5">
+          {job.steps.map((step, i) => (
+            <div key={i} className="flex items-start gap-2">
+              <span className="mt-0.5 text-sm shrink-0">{STEP_ICON[step.status]}</span>
+              <div className="min-w-0 flex-1">
+                <span className={`text-xs ${step.status === 'pending' || step.status === 'skipped' ? 'text-on-surface-variant' : 'text-on-surface'}`}>
+                  {step.name}
+                </span>
+                {step.status === 'running' && step.detail
+                  ? <StepLog detail={step.detail} />
+                  : step.detail && <p className="truncate text-xs text-on-surface-variant">{step.detail}</p>
+                }
               </div>
             </div>
-          )}
-
-          {r.offendingCommit && (
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-on-surface-variant mb-1">Offending Commit</p>
-              <p className="font-mono text-[12px] text-on-surface">
-                <span className="rounded bg-surface-container-high px-1.5 py-0.5">{r.offendingCommit.slice(0, 8)}</span>
-                {r.commitMessage && <span className="ml-2 text-on-surface-variant">{r.commitMessage}</span>}
-              </p>
-            </div>
-          )}
-
-          {r.fixDirection && (
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-on-surface-variant mb-1">Fix Direction</p>
-              <p className="text-sm text-on-surface leading-relaxed whitespace-pre-wrap">{r.fixDirection}</p>
-            </div>
-          )}
-
-          {(r.prNumber || r.jiraKey) && (
-            <div className="flex flex-wrap gap-3 pt-1">
-              {r.prNumber && r.prUrl && (
-                <a href={r.prUrl} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 rounded-lg border border-outline-variant px-3 py-1.5 text-xs font-medium text-on-surface hover:bg-surface-container transition-colors">
-                  🔀 PR #{r.prNumber}
-                </a>
-              )}
-              {r.jiraKey && r.jiraUrl && (
-                <a href={r.jiraUrl} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 rounded-lg border border-outline-variant px-3 py-1.5 text-xs font-medium text-on-surface hover:bg-surface-container transition-colors">
-                  🎫 {r.jiraKey}
-                </a>
-              )}
-            </div>
-          )}
+          ))}
         </div>
       )}
 
-      {isFailed && (
-        <div className="border-t border-outline-variant px-4 py-3">
-          <p className="text-xs text-error">{r?.error ?? 'Unknown error — check server logs.'}</p>
-        </div>
-      )}
+      <div className="mt-3 flex justify-end">
+        <Link
+          to="/jobs"
+          className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-on-primary hover:opacity-90 transition-opacity"
+        >
+          View in Jobs <RiArrowRightLine />
+        </Link>
+      </div>
     </div>
   )
 }
@@ -204,9 +158,7 @@ interface AskMessage {
 
 interface BugMessage {
   type: 'bug'
-  role: 'user' | 'assistant'
-  content: string
-  jobId: string
+  role: 'assistant'
   job: Job
 }
 
@@ -222,14 +174,13 @@ const SUGGESTED = [
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function ChatPage() {
-  const [repos, setRepos]                     = useState<Repo[]>([])
-  const [selectedRepoId, setSelectedRepoId]   = useState<string>('')
-  const [messages, setMessages]               = useState<Message[]>([])
-  const [input, setInput]                     = useState('')
-  const [loading, setLoading]                 = useState(false)
-  const [error, setError]                     = useState<string | null>(null)
+  const [repos, setRepos]                   = useState<Repo[]>([])
+  const [selectedRepoId, setSelectedRepoId] = useState<string>('')
+  const [messages, setMessages]             = useState<Message[]>([])
+  const [input, setInput]                   = useState('')
+  const [loading, setLoading]               = useState(false)
+  const [error, setError]                   = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
-  const pollRef   = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     reposService.list().then((data) => {
@@ -243,23 +194,6 @@ export function ChatPage() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
 
-  useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current) }, [])
-
-  function startPolling(jobId: string) {
-    pollRef.current = setInterval(async () => {
-      try {
-        const updated = await jobsService.get(jobId)
-        setMessages((prev) =>
-          prev.map((m) => m.type === 'bug' && m.jobId === jobId ? { ...m, job: updated } : m),
-        )
-        if (updated.status === 'done' || updated.status === 'failed') {
-          clearInterval(pollRef.current!)
-          pollRef.current = null
-        }
-      } catch { /* ignore transient poll errors */ }
-    }, 2000)
-  }
-
   async function handleChat(message: string) {
     if (!selectedRepoId) return
     setMessages((prev) => [...prev, { type: 'ask', role: 'user', content: message }])
@@ -269,8 +203,7 @@ export function ChatPage() {
       if (res.type === 'ask') {
         setMessages((prev) => [...prev, { type: 'ask', role: 'assistant', content: res.answer, chunksUsed: res.chunks_used }])
       } else {
-        setMessages((prev) => [...prev, { type: 'bug', role: 'assistant', content: '', jobId: res.job_id, job: res.job }])
-        startPolling(res.job_id)
+        setMessages((prev) => [...prev, { type: 'bug', role: 'assistant', job: res.job }])
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Request failed')
@@ -346,23 +279,16 @@ export function ChatPage() {
           </div>
         )}
 
-        {messages.map((msg, i) => {
-          if (msg.type === 'bug' && msg.role === 'assistant') {
-            return (
-              <div key={i} className="flex justify-start">
-                <div className="mr-3 shrink-0"><ZenfixMark size={28} /></div>
-                <div className="max-w-[80%] min-w-[320px]">
-                  <InvestigationCard job={msg.job} />
-                </div>
+        {messages.map((msg, i) => (
+          <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            {msg.role === 'assistant' && (
+              <div className="mr-3 shrink-0"><ZenfixMark size={28} /></div>
+            )}
+            {msg.type === 'bug' ? (
+              <div className="max-w-[75%]">
+                <InvestigationCard job={msg.job} />
               </div>
-            )
-          }
-
-          return (
-            <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              {msg.role === 'assistant' && (
-                <div className="mr-3 shrink-0"><ZenfixMark size={28} /></div>
-              )}
+            ) : (
               <div className={`max-w-[75%] ${msg.role === 'user' ? 'order-first' : ''}`}>
                 <div className={`rounded-2xl px-4 py-3 text-sm ${
                   msg.role === 'user'
@@ -371,15 +297,15 @@ export function ChatPage() {
                 }`}>
                   {msg.role === 'user'
                     ? msg.content
-                    : msg.type === 'ask' && <MarkdownContent content={msg.content} />}
+                    : <MarkdownContent content={msg.content} />}
                 </div>
-                {msg.type === 'ask' && msg.role === 'assistant' && msg.chunksUsed !== undefined && (
+                {msg.role === 'assistant' && msg.chunksUsed !== undefined && (
                   <p className="mt-1 px-1 text-[11px] text-on-surface-variant font-mono">{msg.chunksUsed} chunks used</p>
                 )}
               </div>
-            </div>
-          )
-        })}
+            )}
+          </div>
+        ))}
 
         {loading && (
           <div className="flex justify-start">
