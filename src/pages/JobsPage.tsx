@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
 import {
-  RiCheckLine,
+  RiCheckboxCircleLine,
   RiCloseCircleLine,
   RiInboxLine,
-  RiLoader4Line,
+  RiPlayCircleLine,
   RiRadioButtonLine,
   RiRefreshLine,
 } from 'react-icons/ri'
@@ -18,10 +18,10 @@ type Filter = JobStatus | 'all'
 
 const FILTERS: { key: Filter; label: string; icon?: React.ReactNode }[] = [
   { key: 'all',     label: 'All' },
-  { key: 'running', label: 'Running', icon: <RiLoader4Line className="animate-spin" /> },
-  { key: 'done',    label: 'Done',    icon: <RiCheckLine /> },
-  { key: 'failed',  label: 'Failed',  icon: <RiCloseCircleLine /> },
-  { key: 'pending', label: 'Pending', icon: <RiRadioButtonLine /> },
+  { key: 'running', label: 'Running', icon: <RiPlayCircleLine className="text-amber-500" /> },
+  { key: 'done',    label: 'Done',    icon: <RiCheckboxCircleLine className="text-emerald-500" /> },
+  { key: 'failed',  label: 'Failed',  icon: <RiCloseCircleLine className="text-rose-500" /> },
+  { key: 'pending', label: 'Pending', icon: <RiRadioButtonLine className="text-slate-400" /> },
 ]
 
 export function JobsPage() {
@@ -57,7 +57,7 @@ export function JobsPage() {
             Live investigation and fix pipeline runs.
             {runningCount > 0 && (
               <span className="ml-2 inline-flex items-center gap-1 font-medium text-primary">
-                <RiLoader4Line className="animate-spin" /> {runningCount} running
+                <RiPlayCircleLine className="text-amber-500" /> {runningCount} running
               </span>
             )}
           </p>

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { RiArrowRightLine, RiCheckLine, RiCloseCircleLine, RiLoader4Line, RiRadioButtonLine, RiSendPlane2Line, RiToolsLine } from 'react-icons/ri'
+import { RiArrowRightLine, RiCheckboxCircleLine, RiCloseCircleLine, RiPlayCircleLine, RiRadioButtonLine, RiRefreshLine, RiSendPlane2Line, RiSkipForwardLine, RiToolsLine } from 'react-icons/ri'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Link } from 'react-router-dom'
@@ -69,12 +69,20 @@ function MarkdownContent({ content }: { content: string }) {
 
 // ── Inline investigation card ─────────────────────────────────────────────────
 
+const STEP_COLOR: Record<JobStep['status'], string> = {
+  pending: 'text-slate-400',
+  running: 'text-amber-500',
+  done:    'text-emerald-500',
+  failed:  'text-rose-500',
+  skipped: 'text-slate-400',
+}
+
 const STEP_ICON: Record<JobStep['status'], React.ReactNode> = {
-  pending: <RiRadioButtonLine className="text-outline" />,
-  running: <RiLoader4Line className="animate-spin text-primary" />,
-  done:    <RiCheckLine className="text-green-600" />,
-  failed:  <RiCloseCircleLine className="text-error" />,
-  skipped: <RiArrowRightLine className="text-on-surface-variant" />,
+  pending: <RiRadioButtonLine className="text-slate-400" />,
+  running: <RiPlayCircleLine className="text-amber-500" />,
+  done:    <RiCheckboxCircleLine className="text-emerald-500" />,
+  failed:  <RiCloseCircleLine className="text-rose-500" />,
+  skipped: <RiSkipForwardLine className="text-slate-400" />,
 }
 
 export const StepLog = ({ detail }: { detail: string }) => {
@@ -110,7 +118,7 @@ function InvestigationCard({ job }: { job: Job }) {
           </span>
         </div>
         <span className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-primary-fixed px-2.5 py-1 text-xs font-medium text-primary ring-1 ring-primary-fixed-dim">
-          <RiLoader4Line className="animate-spin" /> Running
+          <RiRefreshLine className="animate-spin" /> Running
         </span>
       </div>
 
@@ -122,7 +130,7 @@ function InvestigationCard({ job }: { job: Job }) {
             <div key={i} className="flex items-start gap-2">
               <span className="mt-0.5 text-sm shrink-0">{STEP_ICON[step.status]}</span>
               <div className="min-w-0 flex-1">
-                <span className={`text-xs ${step.status === 'pending' || step.status === 'skipped' ? 'text-on-surface-variant' : 'text-on-surface'}`}>
+                <span className={`text-xs font-medium ${STEP_COLOR[step.status]}`}>
                   {step.name}
                 </span>
                 {step.status === 'running' && step.detail
